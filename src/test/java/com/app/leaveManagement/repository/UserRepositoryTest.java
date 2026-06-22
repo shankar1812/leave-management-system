@@ -1,5 +1,8 @@
 package com.app.leaveManagement.repository;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
@@ -28,8 +31,9 @@ class UserRepositoryTest {
 
         Optional<User> found = userRepository.findByEmail("test@example.com");
 
+        System.out.println("Found: " + found); 
         assertTrue(found.isPresent());
-        assertEquals("Test User", found.get().getName());
+		assertEquals("Test User", found.get().getName());
     }
 
     @Test

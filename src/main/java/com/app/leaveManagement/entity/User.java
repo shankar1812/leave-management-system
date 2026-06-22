@@ -21,16 +21,14 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 import lombok.ToString;
 
+@Data
 @Entity
 @Table(name = "users")
-@Getter
-@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -65,7 +63,8 @@ public class User {
 
     private LocalDate joiningDate;
 
-    @Column(nullable = false)
+
+	@Column(nullable = false)
     private boolean isActive;
 
     @CreationTimestamp
@@ -73,4 +72,20 @@ public class User {
 
     @UpdateTimestamp
     private LocalDateTime updatedAt;
+    
+    
+    public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+    
+    
+    
+    
+    
+    
+    
 }
