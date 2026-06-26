@@ -30,14 +30,20 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
-                        		"/api/v1/auth/**",
-                        		"/swagger-ui/**","/v3/api-docs/**","/swagger-ui.html","/v3/api-docs.yaml"
-                        		).permitAll()  // Login endpoint is public
-                        .anyRequest().authenticated()                   // Everything else needs auth
+                        		 "/api/v1/auth/**",          
+                                 "/swagger-ui/**",
+                                 "/v3/api-docs/**",
+                                 "/swagger-ui.html",
+                                 "/v3/api-docs.yaml"
+                        		).permitAll()
+                        // Login endpoint is public
+                        .anyRequest().authenticated()               
+                        // Everything else needs auth
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
+        System.out.println("✅ SecurityConfig loaded – login endpoint is permitAll");
         return http.build();
     }
 
