@@ -9,6 +9,8 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import com.app.leaveManagement.exception.DuplicateResourceException;
+import com.app.leaveManagement.exception.InsufficientLeaveBalanceException;
+import com.app.leaveManagement.exception.InvalidStateTransitionException;
 import com.app.leaveManagement.exception.ResourceNotFoundException;
 import com.app.leaveManagement.service.impl.DepartmentServiceImpl;
 
@@ -70,4 +72,35 @@ public class GlobalExceptionHandler {
                 .build();
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
-}
+    
+    @ExceptionHandler(InvalidStateTransitionException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidTransition(InvalidStateTransitionException ex) {
+        log.warn("Invalid state transition: {}", ex.getMessage());
+        ErrorResponse error = ErrorResponse.builder()
+                .message(ex.getMessage())
+                .status(HttpStatus.CONFLICT.value())
+                .timestamp(LocalDateTime.now())
+                .build();
+        return new ResponseEntity<>(error, HttpStatus.CONFLICT);
+    }
+    
+    @ExceptionHandler(InsufficientLeaveBalanceException.class)
+    public ResponseEntity<ErrorResponse> handleInsufficientBalance(InsufficientLeaveBalanceException ex) {
+        log.warn("Insufficient leave balance: {}", ex.getMessage());
+        ErrorResponse error = ErrorResponse.builder()
+                .message(ex.getMessage())
+                .status(HttpStatus.BAD_REQUEST.value())
+                .timestamp(LocalDateTime.now())
+                .build();
+        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+    }
+    
+    }
+    
+    
+    
+    
+    
+    
+
+    
