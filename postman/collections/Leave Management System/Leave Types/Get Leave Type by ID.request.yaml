@@ -1,0 +1,5 @@
+$kind: http-request
+name: Get Leave Type by ID
+method: GET
+url: '{{baseUrl}}/api/v1/leave-types/{{leaveTypeId}}'
+order: 2000

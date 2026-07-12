@@ -1,0 +1,5 @@
+$kind: http-request
+name: Get Department by ID
+method: GET
+url: '{{baseUrl}}/api/v1/departments/{{departmentId}}'
+order: 2000

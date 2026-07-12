@@ -1,0 +1,18 @@
+$kind: http-request
+name: Apply for Leave
+method: POST
+url: '{{baseUrl}}/api/v1/leaves'
+order: 1000
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "leaveTypeId": 1,
+      "startDate": "2026-08-01",
+      "endDate": "2026-08-05",
+      "halfDayType": null,
+      "reason": "Family vacation"
+    }

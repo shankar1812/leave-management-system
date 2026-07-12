@@ -1,0 +1,15 @@
+$kind: http-request
+name: HR Decision
+method: POST
+url: '{{baseUrl}}/api/v1/leaves/{{leaveId}}/approvals/hr'
+order: 2000
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "decision": "APPROVED",
+      "remarks": "Approved by HR"
+    }
