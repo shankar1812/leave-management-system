@@ -1,0 +1,8 @@
+$kind: collection
+name: Leave Management System
+description: 'API collection for the Leave Management System. Covers authentication, user management, departments, leave types, leave applications, approvals, balances, and audit logs.'
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{authToken}}'

@@ -1,0 +1,5 @@
+$kind: http-request
+name: Deactivate Leave Type
+method: DELETE
+url: '{{baseUrl}}/api/v1/leave-types/{{leaveTypeId}}'
+order: 5000

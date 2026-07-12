@@ -1,0 +1,15 @@
+$kind: http-request
+name: Manager Decision
+method: POST
+url: '{{baseUrl}}/api/v1/leaves/{{leaveId}}/approvals/manager'
+order: 1000
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "decision": "APPROVED",
+      "remarks": "Approved by manager"
+    }

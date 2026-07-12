@@ -1,0 +1,5 @@
+$kind: http-request
+name: Get Leave Balances by User
+method: GET
+url: '{{baseUrl}}/api/v1/leave-balances/user/{{userId}}'
+order: 1000

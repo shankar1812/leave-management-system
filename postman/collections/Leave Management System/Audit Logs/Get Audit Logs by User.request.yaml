@@ -1,0 +1,5 @@
+$kind: http-request
+name: Get Audit Logs by User
+method: GET
+url: '{{baseUrl}}/api/v1/audit-logs/user/{{userEmail}}'
+order: 2000

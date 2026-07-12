@@ -1,0 +1,5 @@
+$kind: http-request
+name: Cancel Leave
+method: PATCH
+url: '{{baseUrl}}/api/v1/leaves/{{leaveId}}/cancel'
+order: 2000

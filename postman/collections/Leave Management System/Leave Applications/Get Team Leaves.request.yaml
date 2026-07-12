@@ -1,0 +1,12 @@
+$kind: http-request
+name: Get Team Leaves
+method: GET
+url: '{{baseUrl}}/api/v1/leaves/team'
+order: 5000
+queryParams:
+  - key: status
+    value: PENDING
+  - key: page
+    value: '0'
+  - key: size
+    value: '10'

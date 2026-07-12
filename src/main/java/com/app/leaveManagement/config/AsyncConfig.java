@@ -14,6 +14,7 @@ public class AsyncConfig {
 
     @Bean(name = "emailTaskExecutor")
     public Executor emailTaskExecutor() {
+  	// ThreadPoolTaskExecutor allows you to execute tasks asynchronously using a pool of reusable threads instead of creating a new thread every time.
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
         executor.setCorePoolSize(2);
         executor.setMaxPoolSize(5);
