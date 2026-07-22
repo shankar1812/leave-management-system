@@ -1,6 +1,7 @@
 package com.app.leaveManagement.service.impl;
 
 import com.app.leaveManagement.audit.Auditable;
+import com.app.leaveManagement.config.CacheConfig;
 import com.app.leaveManagement.dto.LeaveBalanceResponse;
 import com.app.leaveManagement.entity.LeaveBalance;
 import com.app.leaveManagement.entity.LeaveType;
@@ -21,6 +22,9 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 
 @Service
 @RequiredArgsConstructor
@@ -117,13 +121,12 @@ public class LeaveBalanceServiceImpl implements LeaveBalanceService {
     }
 
     @Override
+    @Cacheable(value = CacheConfig.LEAVE_BALANCE_CACHE, key = "#userId")
     public List<LeaveBalanceResponse> getBalancesByUser(Long userId) {
-        log.info("Fetching leave balances for user id: {}", userId);
-
+        log.info("CACHE MISS — fetching leave balances from DB for user id: {}", userId);
         int currentYear = LocalDate.now().getYear();
         List<LeaveBalance> balances = leaveBalanceRepository
                 .findByUserIdAndYear(userId, currentYear);
-
         return balances.stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
@@ -131,8 +134,10 @@ public class LeaveBalanceServiceImpl implements LeaveBalanceService {
 
     @Override
     @Transactional
+    @CacheEvict(value = CacheConfig.LEAVE_BALANCE_CACHE, key = "#userId")
     @Auditable(action = "DEDUCT_BALANCE", entityType = "LeaveBalance")
     public void deductBalance(Long userId, Long leaveTypeId, BigDecimal days) {
+        
         log.info("Deducting {} days from leave type id: {} for user id: {}",
                 days, leaveTypeId, userId);
 
@@ -161,8 +166,10 @@ public class LeaveBalanceServiceImpl implements LeaveBalanceService {
 
     @Override
     @Transactional
+    @CacheEvict(value = CacheConfig.LEAVE_BALANCE_CACHE, key = "#userId")
     @Auditable(action = "RESTORE_BALANCE", entityType = "LeaveBalance")
     public void restoreBalance(Long userId, Long leaveTypeId, BigDecimal days) {
+       
         log.info("Restoring {} days to leave type id: {} for user id: {}",
                 days, leaveTypeId, userId);
 

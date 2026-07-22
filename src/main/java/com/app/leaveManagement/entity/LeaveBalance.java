@@ -9,12 +9,14 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
+
 @Table(
-    name = "leave_balances",
-    uniqueConstraints = @UniqueConstraint(
-        columnNames = {"user_id", "leave_type_id", "year"}
-    )
-)
+	    name = "leave_balances",
+	    uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "leave_type_id", "year"}),
+	    indexes = {
+	        @Index(name = "idx_leave_balance_user_year", columnList = "user_id, year")
+	    }
+	)
 @Getter
 @Setter
 @NoArgsConstructor

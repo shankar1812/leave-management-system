@@ -13,15 +13,24 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-@Entity
-@Table(name = "leave_applications")
-@Getter
-@Setter
+
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 @EqualsAndHashCode(of = "id")
 @ToString(exclude = {"user", "leaveType", "approvals"})
+
+@Entity
+@Table(
+    name = "leave_applications",
+    indexes = {
+        @Index(name = "idx_leave_app_user_id", columnList = "user_id"),
+        @Index(name = "idx_leave_app_status", columnList = "status"),
+        @Index(name = "idx_leave_app_dates", columnList = "start_date, end_date"),
+        @Index(name = "idx_leave_app_user_status", columnList = "user_id, status")
+    }
+)
 public class LeaveApplication {
 
     @Id

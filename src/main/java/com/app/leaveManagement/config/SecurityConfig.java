@@ -30,11 +30,13 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
-                        		 "/api/v1/auth/**",          
-                                 "/swagger-ui/**",
-                                 "/v3/api-docs/**",
-                                 "/swagger-ui.html",
-                                 "/v3/api-docs.yaml"
+                        	
+                        			    "/api/v1/auth/**",
+                        			    "/swagger-ui/**",
+                        			    "/v3/api-docs/**",
+                        			    "/swagger-ui.html",
+                        			    "/actuator/**"
+                        			
                         		).permitAll()
                         // Login endpoint is public
                         .anyRequest().authenticated()               
