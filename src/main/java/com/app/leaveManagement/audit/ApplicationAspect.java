@@ -8,6 +8,8 @@ import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.*;
 import org.aspectj.lang.reflect.MethodSignature;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -20,6 +22,7 @@ import java.lang.reflect.Method;
 @Slf4j
 public class ApplicationAspect {
 
+   // private static final Logger log = LoggerFactory.getLogger(ApplicationAspect.class);
     private final AuditLogRepository auditLogRepository;
 
     // All methods in any service implementation class

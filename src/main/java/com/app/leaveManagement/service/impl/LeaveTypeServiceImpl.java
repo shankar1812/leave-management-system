@@ -1,5 +1,6 @@
 package com.app.leaveManagement.service.impl;
 
+import com.app.leaveManagement.config.CacheConfig;
 import com.app.leaveManagement.dto.LeaveTypeRequest;
 import com.app.leaveManagement.dto.LeaveTypeResponse;
 import com.app.leaveManagement.entity.LeaveType;
@@ -9,6 +10,8 @@ import com.app.leaveManagement.repository.LeaveTypeRepository;
 import com.app.leaveManagement.service.LeaveTypeService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,6 +27,7 @@ public class LeaveTypeServiceImpl implements LeaveTypeService {
 
     @Override
     @Transactional
+    @CacheEvict(value = CacheConfig.LEAVE_TYPES_CACHE, allEntries = true)
     public LeaveTypeResponse createLeaveType(LeaveTypeRequest request) {
         log.info("Creating leave type with name: {}", request.getName());
 
@@ -58,8 +62,9 @@ public class LeaveTypeServiceImpl implements LeaveTypeService {
     }
 
     @Override
+    @Cacheable(value = CacheConfig.LEAVE_TYPES_CACHE, key = "'all-active'")
     public List<LeaveTypeResponse> getAllActiveLeaveTypes() {
-        log.info("Fetching all active leave types");
+        log.info("CACHE MISS — fetching active leave types from DB");
         return leaveTypeRepository.findByIsActiveTrue()
                 .stream()
                 .map(this::mapToResponse)
@@ -68,6 +73,7 @@ public class LeaveTypeServiceImpl implements LeaveTypeService {
 
     @Override
     @Transactional
+    @CacheEvict(value = CacheConfig.LEAVE_TYPES_CACHE, allEntries = true)
     public LeaveTypeResponse updateLeaveType(Long id, LeaveTypeRequest request) {
         log.info("Updating leave type with id: {}", id);
 
@@ -95,6 +101,7 @@ public class LeaveTypeServiceImpl implements LeaveTypeService {
 
     @Override
     @Transactional
+    @CacheEvict(value = CacheConfig.LEAVE_TYPES_CACHE, allEntries = true)
     public void deactivateLeaveType(Long id) {
         log.info("Deactivating leave type with id: {}", id);
 

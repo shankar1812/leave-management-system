@@ -1,6 +1,7 @@
 package com.app.leaveManagement.service.impl;
 
 import com.app.leaveManagement.audit.Auditable;
+import com.app.leaveManagement.config.CacheConfig;
 import com.app.leaveManagement.dto.HolidayRequest;
 import com.app.leaveManagement.dto.HolidayResponse;
 import com.app.leaveManagement.entity.Holiday;
@@ -10,6 +11,8 @@ import com.app.leaveManagement.repository.HolidayRepository;
 import com.app.leaveManagement.service.HolidayService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,6 +29,7 @@ public class HolidayServiceImpl implements HolidayService {
 
     @Override
     @Transactional
+    @CacheEvict(value = CacheConfig.HOLIDAYS_CACHE, allEntries = true)
     @Auditable(action = "CREATE_HOLIDAY", entityType = "Holiday")
     public HolidayResponse createHoliday(HolidayRequest request) {
         log.info("Creating holiday: {} on date: {}", request.getName(), request.getDate());
@@ -50,6 +54,7 @@ public class HolidayServiceImpl implements HolidayService {
 
     @Override
     public HolidayResponse getHolidayById(Long id) {
+        log.info("Fetching holiday with id: {}", id);
         Holiday holiday = holidayRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(
                     "Holiday not found with id: " + id
@@ -58,9 +63,10 @@ public class HolidayServiceImpl implements HolidayService {
     }
 
     @Override
+    @Cacheable(value = CacheConfig.HOLIDAYS_CACHE, key = "#year")
     public List<HolidayResponse> getAllHolidays(Integer year) {
         int targetYear = (year != null) ? year : LocalDate.now().getYear();
-        log.info("Fetching all holidays for year: {}", targetYear);
+        log.info("CACHE MISS — fetching holidays from DB for year: {}", targetYear);
 
         return holidayRepository.findByYear(targetYear)
                 .stream()
@@ -70,6 +76,7 @@ public class HolidayServiceImpl implements HolidayService {
 
     @Override
     @Transactional
+    @CacheEvict(value = CacheConfig.HOLIDAYS_CACHE, allEntries = true)
     @Auditable(action = "UPDATE_HOLIDAY", entityType = "Holiday")
     public HolidayResponse updateHoliday(Long id, HolidayRequest request) {
         log.info("Updating holiday id: {}", id);
@@ -88,6 +95,7 @@ public class HolidayServiceImpl implements HolidayService {
 
     @Override
     @Transactional
+    @CacheEvict(value = CacheConfig.HOLIDAYS_CACHE, allEntries = true)
     @Auditable(action = "DELETE_HOLIDAY", entityType = "Holiday")
     public void deleteHoliday(Long id) {
         log.info("Deleting holiday id: {}", id);
