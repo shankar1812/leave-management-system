@@ -6,7 +6,9 @@ import com.app.leaveManagement.enums.LeaveStatus;
 import com.app.leaveManagement.exception.ResourceNotFoundException;
 import com.app.leaveManagement.repository.UserRepository;
 import com.app.leaveManagement.service.LeaveApplicationService;
+import com.app.leaveManagement.service.RateLimitService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -29,28 +31,36 @@ import org.springframework.web.bind.annotation.*;
 public class LeaveApplicationController {
 
     private final LeaveApplicationService leaveApplicationService;
+    private final RateLimitService rateLimitService;
     private final UserRepository userRepository;
 
     @PostMapping
     @PreAuthorize("hasRole('EMPLOYEE')")
     @Operation(
         summary = "Apply for leave",
-        description = "Employee submits a leave application. Validates overlap, balance, and active leave type."
+        description = "Employee submits a leave application. Validates overlap, balance, and active leave type. Rate limited to 3 applications per hour."
     )
     @ApiResponses({
         @ApiResponse(responseCode = "201", description = "Leave application created successfully"),
         @ApiResponse(responseCode = "400", description = "Insufficient balance or invalid date range"),
-        @ApiResponse(responseCode = "409", description = "Overlapping leave exists or invalid state transition")
+        @ApiResponse(responseCode = "409", description = "Overlapping leave exists or invalid state transition"),
+        @ApiResponse(responseCode = "429", description = "Too many requests – rate limit exceeded")
     })
     public ResponseEntity<LeaveApplicationResponse> applyLeave(
             @Valid @RequestBody LeaveApplicationRequest request,
-            @AuthenticationPrincipal UserDetails userDetails) {
+            @Parameter(hidden = true) @AuthenticationPrincipal UserDetails userDetails) {
 
         Long userId = getUserId(userDetails);
-        return new ResponseEntity<>(
-            leaveApplicationService.applyLeave(userId, request),
-            HttpStatus.CREATED
-        );
+        LeaveApplicationResponse response = leaveApplicationService.applyLeave(userId, request);
+
+        // Add rate limit headers
+        long remaining = rateLimitService.getRemainingTokens(userId);
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .header("X-RateLimit-Limit", "3")
+                .header("X-RateLimit-Remaining", String.valueOf(remaining))
+                .header("X-RateLimit-Window", "1 hour")
+                .body(response);
     }
 
     @PatchMapping("/{id}/cancel")
@@ -66,7 +76,7 @@ public class LeaveApplicationController {
     })
     public ResponseEntity<LeaveApplicationResponse> cancelLeave(
             @PathVariable Long id,
-            @AuthenticationPrincipal UserDetails userDetails) {
+            @Parameter(hidden = true) @AuthenticationPrincipal UserDetails userDetails) {
 
         Long userId = getUserId(userDetails);
         return ResponseEntity.ok(leaveApplicationService.cancelLeave(userId, id));
@@ -98,7 +108,7 @@ public class LeaveApplicationController {
     public ResponseEntity<Page<LeaveApplicationResponse>> getMyLeaves(
             @RequestParam(required = false) LeaveStatus status,
             @PageableDefault(size = 10, sort = "appliedAt") Pageable pageable,
-            @AuthenticationPrincipal UserDetails userDetails) {
+            @Parameter(hidden = true) @AuthenticationPrincipal UserDetails userDetails) {
 
         Long userId = getUserId(userDetails);
         return ResponseEntity.ok(
@@ -119,7 +129,7 @@ public class LeaveApplicationController {
     public ResponseEntity<Page<LeaveApplicationResponse>> getTeamLeaves(
             @RequestParam(required = false) LeaveStatus status,
             @PageableDefault(size = 10, sort = "appliedAt") Pageable pageable,
-            @AuthenticationPrincipal UserDetails userDetails) {
+            @Parameter(hidden = true) @AuthenticationPrincipal UserDetails userDetails) {
 
         Long managerId = getUserId(userDetails);
         return ResponseEntity.ok(

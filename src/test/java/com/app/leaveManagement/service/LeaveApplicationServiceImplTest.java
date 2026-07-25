@@ -8,12 +8,11 @@ import com.app.leaveManagement.entity.User;
 import com.app.leaveManagement.enums.LeaveStatus;
 import com.app.leaveManagement.enums.Role;
 import com.app.leaveManagement.exception.InvalidStateTransitionException;
+import com.app.leaveManagement.exception.RateLimitException;
 import com.app.leaveManagement.exception.ResourceNotFoundException;
 import com.app.leaveManagement.repository.LeaveApplicationRepository;
 import com.app.leaveManagement.repository.LeaveTypeRepository;
 import com.app.leaveManagement.repository.UserRepository;
-import com.app.leaveManagement.service.LeaveBalanceService;
-import com.app.leaveManagement.service.LeaveStateMachine;
 import com.app.leaveManagement.service.impl.LeaveApplicationServiceImpl;
 import com.app.leaveManagement.util.LeaveDayCalculator;
 import org.junit.jupiter.api.Test;
@@ -52,6 +51,9 @@ class LeaveApplicationServiceImplTest {
     @Mock
     private LeaveDayCalculator leaveDayCalculator;
 
+    @Mock
+    private RateLimitService rateLimitService;   // <-- ADDED
+
     @InjectMocks
     private LeaveApplicationServiceImpl leaveApplicationService;
 
@@ -68,12 +70,66 @@ class LeaveApplicationServiceImplTest {
                 .isActive(true).build();
     }
 
+    // ----- RATE LIMITING TESTS -----
+
+    @Test
+    void shouldApplyLeaveWhenRateLimitNotExceeded() {
+        // Simulate that rate limit allows the request
+        when(rateLimitService.tryConsume(1L)).thenReturn(true);
+        when(rateLimitService.getRemainingTokens(1L)).thenReturn(2L);
+
+        // Set up rest of the mocks for a successful apply
+        User user = buildUser();
+        LeaveType leaveType = buildLeaveType();
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(leaveTypeRepository.findById(1L)).thenReturn(Optional.of(leaveType));
+        when(leaveApplicationRepository.findOverlappingLeaves(any(), any(), any()))
+                .thenReturn(List.of());
+        when(leaveDayCalculator.calculate(any(), any(), any()))
+                .thenReturn(BigDecimal.valueOf(3));
+        when(leaveApplicationRepository.save(any(LeaveApplication.class)))
+                .thenAnswer(inv -> {
+                    LeaveApplication la = inv.getArgument(0);
+                    la.setId(1L);
+                    return la;
+                });
+
+        LeaveApplicationResponse response = leaveApplicationService.applyLeave(1L, buildRequest());
+
+        assertNotNull(response);
+        assertEquals(LeaveStatus.PENDING, response.getStatus());
+        assertEquals(BigDecimal.valueOf(3), response.getTotalDays());
+        verify(leaveBalanceService).deductBalance(1L, 1L, BigDecimal.valueOf(3));
+    }
+
+    @Test
+    void shouldThrowRateLimitExceptionWhenLimitExceeded() {
+        // Simulate that rate limit is exceeded
+        when(rateLimitService.tryConsume(1L)).thenReturn(false);
+
+        LeaveApplicationRequest request = buildRequest();
+
+        assertThrows(RateLimitException.class,
+                () -> leaveApplicationService.applyLeave(1L, request));
+
+        // Verify that NO DB operations are performed
+        verify(userRepository, never()).findById(any());
+        verify(leaveTypeRepository, never()).findById(any());
+        verify(leaveApplicationRepository, never()).findOverlappingLeaves(any(), any(), any());
+        verify(leaveDayCalculator, never()).calculate(any(), any(), any());
+        verify(leaveBalanceService, never()).deductBalance(any(), any(), any());
+        verify(leaveApplicationRepository, never()).save(any());
+    }
+
+    // ----- EXISTING TESTS (with rate limit pass) -----
+
     @Test
     void shouldApplyLeaveSuccessfully() {
-        LeaveApplicationRequest request = new LeaveApplicationRequest();
-        request.setLeaveTypeId(1L);
-        request.setStartDate(LocalDate.now().plusDays(1));
-        request.setEndDate(LocalDate.now().plusDays(3));
+        // Add rate limit pass
+        when(rateLimitService.tryConsume(1L)).thenReturn(true);
+
+        LeaveApplicationRequest request = buildRequest();
 
         User user = buildUser();
         LeaveType leaveType = buildLeaveType();
@@ -101,10 +157,10 @@ class LeaveApplicationServiceImplTest {
 
     @Test
     void shouldThrowWhenOverlappingLeaveExists() {
-        LeaveApplicationRequest request = new LeaveApplicationRequest();
-        request.setLeaveTypeId(1L);
-        request.setStartDate(LocalDate.now().plusDays(1));
-        request.setEndDate(LocalDate.now().plusDays(3));
+        // Rate limit passes
+        when(rateLimitService.tryConsume(1L)).thenReturn(true);
+
+        LeaveApplicationRequest request = buildRequest();
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(buildUser()));
         when(leaveTypeRepository.findById(1L)).thenReturn(Optional.of(buildLeaveType()));
@@ -112,7 +168,7 @@ class LeaveApplicationServiceImplTest {
                 .thenReturn(List.of(new LeaveApplication()));
 
         assertThrows(InvalidStateTransitionException.class,
-            () -> leaveApplicationService.applyLeave(1L, request));
+                () -> leaveApplicationService.applyLeave(1L, request));
 
         verify(leaveBalanceService, never()).deductBalance(any(), any(), any());
         verify(leaveApplicationRepository, never()).save(any());
@@ -120,7 +176,10 @@ class LeaveApplicationServiceImplTest {
 
     @Test
     void shouldThrowWhenLeaveTypeNotFound() {
-        LeaveApplicationRequest request = new LeaveApplicationRequest();
+        // Rate limit passes
+        when(rateLimitService.tryConsume(1L)).thenReturn(true);
+
+        LeaveApplicationRequest request = buildRequest();
         request.setLeaveTypeId(99L);
         request.setStartDate(LocalDate.now().plusDays(1));
         request.setEndDate(LocalDate.now().plusDays(2));
@@ -129,11 +188,12 @@ class LeaveApplicationServiceImplTest {
         when(leaveTypeRepository.findById(99L)).thenReturn(Optional.empty());
 
         assertThrows(ResourceNotFoundException.class,
-            () -> leaveApplicationService.applyLeave(1L, request));
+                () -> leaveApplicationService.applyLeave(1L, request));
     }
 
     @Test
     void shouldCancelLeaveSuccessfully() {
+        // No rate limit involved in cancel
         User user = buildUser();
         LeaveType leaveType = buildLeaveType();
 
@@ -164,8 +224,17 @@ class LeaveApplicationServiceImplTest {
         when(leaveApplicationRepository.findById(1L)).thenReturn(Optional.of(application));
 
         assertThrows(InvalidStateTransitionException.class,
-            () -> leaveApplicationService.cancelLeave(1L, 1L));
+                () -> leaveApplicationService.cancelLeave(1L, 1L));
 
         verify(leaveBalanceService, never()).restoreBalance(any(), any(), any());
+    }
+
+    // Helper to build a valid request
+    private LeaveApplicationRequest buildRequest() {
+        LeaveApplicationRequest request = new LeaveApplicationRequest();
+        request.setLeaveTypeId(1L);
+        request.setStartDate(LocalDate.now().plusDays(1));
+        request.setEndDate(LocalDate.now().plusDays(3));
+        return request;
     }
 }
