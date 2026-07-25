@@ -8,6 +8,7 @@ import com.app.leaveManagement.entity.LeaveType;
 import com.app.leaveManagement.entity.User;
 import com.app.leaveManagement.enums.LeaveStatus;
 import com.app.leaveManagement.exception.InvalidStateTransitionException;
+import com.app.leaveManagement.exception.RateLimitException;
 import com.app.leaveManagement.exception.ResourceNotFoundException;
 import com.app.leaveManagement.repository.LeaveApplicationRepository;
 import com.app.leaveManagement.repository.LeaveTypeRepository;
@@ -15,6 +16,7 @@ import com.app.leaveManagement.repository.UserRepository;
 import com.app.leaveManagement.service.LeaveApplicationService;
 import com.app.leaveManagement.service.LeaveBalanceService;
 import com.app.leaveManagement.service.LeaveStateMachine;
+import com.app.leaveManagement.service.RateLimitService;
 import com.app.leaveManagement.util.LeaveDayCalculator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,11 +39,27 @@ public class LeaveApplicationServiceImpl implements LeaveApplicationService {
     private final LeaveBalanceService leaveBalanceService;
     private final LeaveStateMachine leaveStateMachine;
     private final LeaveDayCalculator leaveDayCalculator;
+    private final RateLimitService rateLimitService;   
 
     @Override
     @Transactional
     @Auditable(action = "APPLY_LEAVE", entityType = "LeaveApplication")
     public LeaveApplicationResponse applyLeave(Long userId, LeaveApplicationRequest request) {
+        log.info("Leave application attempt for user id: {}", userId);
+
+        //  RATE LIMIT CHECK – FIRST thing before any DB work
+        if (!rateLimitService.tryConsume(userId)) {
+            log.warn("Rate limit exceeded for user id: {}", userId);
+            throw new RateLimitException(
+                "Too many leave applications. You can submit a maximum of 3 applications " +
+                "per hour. Please try again later."
+            );
+        }
+
+        log.info("Rate limit passed for user id: {} — remaining tokens: {}",
+                userId, rateLimitService.getRemainingTokens(userId));
+
+        // ---- Existing logic (unchanged) ----
         log.info("User id: {} applying for leave from {} to {}",
                 userId, request.getStartDate(), request.getEndDate());
 
@@ -98,6 +116,7 @@ public class LeaveApplicationServiceImpl implements LeaveApplicationService {
         return mapToResponse(saved);
     }
 
+    // ----- All other methods remain exactly as they were -----
     @Override
     @Transactional
     @Auditable(action = "CANCEL_LEAVE", entityType = "LeaveApplication")

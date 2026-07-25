@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import com.app.leaveManagement.exception.DuplicateResourceException;
 import com.app.leaveManagement.exception.InsufficientLeaveBalanceException;
 import com.app.leaveManagement.exception.InvalidStateTransitionException;
+import com.app.leaveManagement.exception.RateLimitException;
 import com.app.leaveManagement.exception.ResourceNotFoundException;
 import com.app.leaveManagement.service.impl.DepartmentServiceImpl;
 
@@ -93,6 +94,17 @@ public class GlobalExceptionHandler {
                 .timestamp(LocalDateTime.now())
                 .build();
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+    }
+    
+    @ExceptionHandler(RateLimitException.class)
+    public ResponseEntity<ErrorResponse> handleRateLimit(RateLimitException ex) {
+        log.warn("Rate limit exceeded: {}", ex.getMessage());
+        ErrorResponse error = ErrorResponse.builder()
+                .message(ex.getMessage())
+                .status(HttpStatus.TOO_MANY_REQUESTS.value())
+                .timestamp(LocalDateTime.now())
+                .build();
+        return new ResponseEntity<>(error, HttpStatus.TOO_MANY_REQUESTS);
     }
     
     }

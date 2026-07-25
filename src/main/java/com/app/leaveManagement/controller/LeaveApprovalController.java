@@ -5,6 +5,8 @@ import com.app.leaveManagement.dto.LeaveApprovalResponse;
 import com.app.leaveManagement.exception.ResourceNotFoundException;
 import com.app.leaveManagement.repository.UserRepository;
 import com.app.leaveManagement.service.LeaveApprovalService;
+
+import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -26,7 +28,7 @@ public class LeaveApprovalController {
     public ResponseEntity<LeaveApprovalResponse> managerDecision(
             @PathVariable Long leaveId,
             @Valid @RequestBody LeaveApprovalRequest request,
-            @AuthenticationPrincipal UserDetails userDetails) {
+            @Parameter(hidden = true) @AuthenticationPrincipal UserDetails userDetails) {
 
         Long managerId = getUserId(userDetails);
         return ResponseEntity.ok(
@@ -39,7 +41,7 @@ public class LeaveApprovalController {
     public ResponseEntity<LeaveApprovalResponse> hrDecision(
             @PathVariable Long leaveId,
             @Valid @RequestBody LeaveApprovalRequest request,
-            @AuthenticationPrincipal UserDetails userDetails) {
+            @Parameter(hidden = true) @AuthenticationPrincipal UserDetails userDetails) {
 
         Long hrUserId = getUserId(userDetails);
         return ResponseEntity.ok(
