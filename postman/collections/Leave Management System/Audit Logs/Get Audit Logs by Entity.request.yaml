@@ -1,0 +1,5 @@
+$kind: http-request
+name: Get Audit Logs by Entity
+method: GET
+url: '{{baseUrl}}/api/v1/audit-logs/entity/{{entityType}}/{{entityId}}'
+order: 1000

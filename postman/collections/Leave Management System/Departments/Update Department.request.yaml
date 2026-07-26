@@ -1,0 +1,15 @@
+$kind: http-request
+name: Update Department
+method: PUT
+url: '{{baseUrl}}/api/v1/departments/{{departmentId}}'
+order: 4000
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "name": "Engineering Updated",
+      "shiftStartTime": "09:30:00"
+    }

@@ -1,0 +1,12 @@
+$kind: http-request
+name: Get All Departments
+method: GET
+url: '{{baseUrl}}/api/v1/departments'
+order: 3000
+queryParams:
+  - key: page
+    value: '0'
+  - key: size
+    value: '20'
+  - key: sort
+    value: id

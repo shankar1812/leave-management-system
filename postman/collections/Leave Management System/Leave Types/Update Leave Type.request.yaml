@@ -1,0 +1,16 @@
+$kind: http-request
+name: Update Leave Type
+method: PUT
+url: '{{baseUrl}}/api/v1/leave-types/{{leaveTypeId}}'
+order: 4000
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "name": "Annual Leave Updated",
+      "maxDaysPerYear": 25,
+      "isCarryForwardAllowed": true
+    }

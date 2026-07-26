@@ -17,6 +17,7 @@ import com.app.leaveManagement.exception.DuplicateResourceException;
 import com.app.leaveManagement.exception.ResourceNotFoundException;
 import com.app.leaveManagement.repository.DepartmentRepository;
 import com.app.leaveManagement.repository.UserRepository;
+import com.app.leaveManagement.service.LeaveBalanceService;
 import com.app.leaveManagement.service.UserService;
 
 import lombok.RequiredArgsConstructor;
@@ -30,6 +31,8 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final DepartmentRepository departmentRepository;
     private final PasswordEncoder passwordEncoder;
+    
+    private final LeaveBalanceService leaveBalanceService;
 
     @Override
     @Transactional
@@ -67,6 +70,8 @@ public class UserServiceImpl implements UserService {
         User saved = userRepository.save(user);
         log.info("User registered successfully with id: {}", saved.getId());
 
+        // Initialize leave balances for new employee
+        leaveBalanceService.initializeBalancesForUser(saved.getId());
         return mapToResponse(saved);
     }
 
