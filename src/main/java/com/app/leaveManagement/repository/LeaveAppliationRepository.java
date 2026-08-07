@@ -11,6 +11,8 @@ import org.springframework.data.repository.query.Param;
 import java.time.LocalDate;
 import java.util.List;
 
+
+
 public interface LeaveAppliationRepository extends JpaRepository<LeaveApplication, Long> {
 
     Page<LeaveApplication> findByUserId(Long userId, Pageable pageable);
@@ -33,3 +35,4 @@ public interface LeaveAppliationRepository extends JpaRepository<LeaveApplicatio
         @Param("endDate") LocalDate endDate
     );
 }
+
