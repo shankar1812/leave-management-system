@@ -6,8 +6,12 @@ import io.swagger.v3.oas.models.info.Contact;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
+
+import java.util.List;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import io.swagger.v3.oas.models.servers.Server;
 
 @Configuration
 public class OpenApiConfig {
@@ -32,6 +36,15 @@ public class OpenApiConfig {
                                 .name("Shankar Sahu")
                                 .email("sankarsahu4043@gmail.com")
                                 .url("https://github.com/shankar1812")))
+                
+                .servers(List.of(
+                        new Server()
+                            .url("https://leave-management-system-production-5147.up.railway.app")
+                            .description("Production — Railway.app"),
+                        new Server()
+                            .url("http://localhost:8080")
+                            .description("Local Development")
+                    ))
                 .addSecurityItem(new SecurityRequirement()
                         .addList(SECURITY_SCHEME_NAME))
                 .components(new Components()
