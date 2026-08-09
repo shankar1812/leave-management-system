@@ -31,9 +31,9 @@ public class DataSeeder implements CommandLineRunner {
                     .joiningDate(LocalDate.now())
                     .build();
             userRepository.save(admin);
-            log.info("✅ Admin user seeded: admin@lms.com / Admin@1234");
+            log.info("✅ Admin user is seeded: admin@lms.com / Admin@1234");
         } else {
-            log.info("ℹ️ Admin already exists, skipping seed.");
+            log.info("ℹ️ if Admin already exists, skipping seed.");
         }
     }
 }
